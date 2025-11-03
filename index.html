@@ -1,0 +1,251 @@
+/* Descubra a funcionalidade do site postando no gitHub - compartilhe o link */
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Memória</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css&quot; rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <style>
+        body {
+            background-color: #f4f4f9;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            /* Define uma perspectiva para o efeito 3D */
+            perspective: 1000px;
+        }
+
+        .memory-card {
+            background-color: transparent;
+            width: 100%;
+            height: 120px; /* Altura da carta */
+            border: none;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d; /* Mantém o 3D */
+        }
+
+        /* Quando a carta está virada, gira o card-inner */
+        .memory-card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front,
+        .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden; /* Para Safari */
+            backface-visibility: hidden; /* Esconde o lado de trás */
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* "Costas" da carta (o que você vê primeiro) */
+        .card-front {
+            background-color: #0d6efd; /* Azul do Bootstrap */
+            color: white;
+        }
+
+        /* "Frente" da carta (o emoji) */
+        .card-back {
+            background-color: #ffffff;
+            color: #333;
+            transform: rotateY(180deg); /* Já começa virada */
+        }
+
+        /* Estilo para cartas combinadas */
+        .memory-card.matched {
+            cursor: default;
+            opacity: 0.5; /* Fica semitransparente ao acertar */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+               
+                <h1 class="text-center mb-3">Jogo da Memória</h1>
+               
+                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded shadow-sm mb-4">
+                    <button id="reset-btn" class="btn btn-primary btn-lg">Recomeçar</button>
+                    <h4 class="mb-0">Tentativas: <span id="moves-count" class="badge bg-dark">0</span></h4>
+                </div>
+
+                <div id="game-board">
+                    </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js&quot; integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+   
+    <script>
+        // Referências aos elementos do DOM
+        const gameBoard = document.getElementById('game-board');
+        const movesCount = document.getElementById('moves-count');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // Emojis para os pares (6 pares = 12 cartas)
+        // Você pode trocar por quaisquer emojis
+        const symbols = ['🍎', '🍌', '🍉', '🍇', '🍓', '🍒', '🍎', '🍌', '🍉', '🍇', '🍓', '🍒'];
+
+        // Variáveis de estado do Jogo
+        let hasFlippedCard = false;
+        let lockBoard = false; // Trava o tabuleiro para evitar 2+ cliques
+        let firstCard, secondCard;
+        let moves = 0;
+        let matchedPairs = 0;
+
+        // Função para embaralhar um array (Algoritmo Fisher-Yates)
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Função para criar o tabuleiro
+        function createBoard() {
+            // Reseta o estado
+            gameBoard.innerHTML = '';
+            moves = 0;
+            matchedPairs = 0;
+            movesCount.textContent = moves;
+            lockBoard = false;
+            hasFlippedCard = false;
+           
+            // Embaralha os símbolos
+            shuffle(symbols);
+
+            // Cria o HTML de cada carta
+            symbols.forEach(symbol => {
+                const card = document.createElement('div');
+                card.classList.add('memory-card');
+                // Adiciona um data-attribute para sabermos qual é o símbolo
+                card.dataset.symbol = symbol;
+
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">
+                            ? </div>
+                        <div class="card-back">
+                            ${symbol} </div>
+                    </div>
+                `;
+
+                // Adiciona o evento de clique
+                card.addEventListener('click', flipCard);
+                gameBoard.appendChild(card);
+            });
+        }
+
+        // Função principal: Virar a carta
+        function flipCard() {
+            // 'this' se refere à carta que foi clicada
+           
+            // Se o tabuleiro estiver travado (ex: esperando cartas desvirarem), ignora o clique
+            // Se a carta clicada for a mesma que a primeira, ignora
+            if (lockBoard || this === firstCard || this.classList.contains('matched')) {
+                return;
+            }
+
+            this.classList.add('flipped'); // Vira a carta (CSS faz a animação)
+
+            if (!hasFlippedCard) {
+                // Primeiro clique
+                hasFlippedCard = true;
+                firstCard = this;
+            } else {
+                // Segundo clique
+                secondCard = this;
+                moves++;
+                movesCount.textContent = moves;
+               
+                checkForMatch();
+            }
+        }
+
+        // Verifica se as duas cartas viradas são iguais
+        function checkForMatch() {
+            const isMatch = firstCard.dataset.symbol === secondCard.dataset.symbol;
+
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        // Se deu "match" (combinou)
+        function disableCards() {
+            // Marca como "combinado"
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+
+            // Remove o evento de clique para não poderem ser viradas de novo
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+
+            matchedPairs++;
+           
+            // Verifica se o jogo acabou
+            if (matchedPairs === symbols.length / 2) {
+                setTimeout(() => {
+                    alert(`Parabéns! Você venceu em ${moves} tentativas!`);
+                }, 500); // Dá um tempinho para a última carta virar
+            }
+
+            resetBoardState();
+        }
+
+        // Se não deu "match"
+        function unflipCards() {
+            lockBoard = true; // Trava o tabuleiro
+
+            // Espera 1 segundo antes de desvirar
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+               
+                resetBoardState(); // Destrava o tabuleiro e reseta as variáveis
+            }, 1000);
+        }
+
+        // Reseta as variáveis de estado após cada jogada
+        function resetBoardState() {
+            hasFlippedCard = false;
+            lockBoard = false;
+            firstCard = null;
+            secondCard = null;
+        }
+
+        // Event listener do botão de recomeçar
+        resetBtn.addEventListener('click', createBoard);
+
+        // Inicia o jogo pela primeira vez
+        createBoard();
+
+    </script>
+</body>
+</html>

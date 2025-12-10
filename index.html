@@ -1,43 +1,116 @@
-/* Descubra a funcionalidade do site postando no gitHub - compartilhe o link */
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo da Memória</title>
+    <title>Jogo da Memória - Edição Extrema</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css&quot; rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --bg-color: #e0f7fa;
+            --card-back-color: #26c6da;
+            --card-bg-front: #ffffff;
+            --text-color: #006064;
+        }
+
         body {
-            background-color: #f4f4f9;
+            background-color: var(--bg-color);
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .header-painel {
+            background: white;
+            padding: 10px 15px; /* Reduzi padding para economizar espaço */
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* Badge de dificuldade no painel */
+        .badge-difficulty {
+            font-size: 0.7rem;
+            background: #e0f2f1;
+            color: #00897b;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        /* Container do Tabuleiro */
+        #game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            flex: 1;
+            transition: filter 0.3s;
+            width: 100%;
+            padding: 0 10px 20px 10px;
+        }
+
+        /* Expande o container no modo pesadelo */
+        #game-container.container-fluid-nightmare {
+            max-width: 1400px; /* Permite ficar bem largo em telas grandes */
         }
 
         #game-board {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
-            /* Define uma perspectiva para o efeito 3D */
             perspective: 1000px;
+            margin: 0 auto;
+            justify-content: center;
         }
 
+        /* Cartas */
         .memory-card {
             background-color: transparent;
-            width: 100%;
-            height: 120px; /* Altura da carta */
+            aspect-ratio: 3/4;
             border: none;
             cursor: pointer;
+            position: relative;
+            width: 100%; 
         }
 
         .card-inner {
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d; /* Mantém o 3D */
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
         }
 
-        /* Quando a carta está virada, gira o card-inner */
+        .memory-card:active .card-inner {
+            transform: scale(0.97);
+        }
+
         .memory-card.flipped .card-inner {
             transform: rotateY(180deg);
         }
@@ -47,77 +120,411 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            -webkit-backface-visibility: hidden; /* Para Safari */
-            backface-visibility: hidden; /* Esconde o lado de trás */
-            border-radius: 8px;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            user-select: none;
         }
 
-        /* "Costas" da carta (o que você vê primeiro) */
+        /* Parte de trás (visível inicialmente) */
         .card-front {
-            background-color: #0d6efd; /* Azul do Bootstrap */
+            background: linear-gradient(135deg, var(--card-back-color), #00acc1);
             color: white;
+            font-size: 2rem;
         }
 
-        /* "Frente" da carta (o emoji) */
+        /* Parte da frente (com o emoji) */
         .card-back {
-            background-color: #ffffff;
-            color: #333;
-            transform: rotateY(180deg); /* Já começa virada */
+            background-color: var(--card-bg-front);
+            transform: rotateY(180deg);
+            border: 2px solid #eee;
+            font-size: 2.5rem;
         }
 
-        /* Estilo para cartas combinadas */
+        /* --- Estilos Específicos para PESADELO (100 cartas) --- */
+        .game-nightmare {
+            gap: 4px !important; /* Espaço mínimo */
+        }
+
+        .game-nightmare .memory-card {
+            border-radius: 4px;
+        }
+        
+        .game-nightmare .card-inner,
+        .game-nightmare .card-front,
+        .game-nightmare .card-back {
+            border-radius: 5px; /* Bordas menos arredondadas */
+        }
+
+        .game-nightmare .card-front { font-size: 1rem; } /* Ícone ? pequeno */
+        .game-nightmare .card-back { 
+            font-size: 1.5rem; /* Emoji menor */
+            border-width: 1px;
+        }
+
+        /* Responsividade Extrema para Pesadelo */
+        @media (max-width: 768px) {
+            /* No celular, o pesadelo precisa de 5 ou 6 colunas para caber */
+            .game-nightmare {
+                grid-template-columns: repeat(5, 1fr) !important; 
+            }
+            .game-nightmare .card-back { font-size: 1.2rem; }
+        }
+
+        @media (min-width: 769px) {
+            /* No desktop, 10x10 */
+            .game-nightmare {
+                grid-template-columns: repeat(10, 1fr) !important;
+            }
+        }
+
+        .memory-card.matched .card-inner .card-back {
+            background-color: #d1e7dd;
+            border-color: #badbcc;
+            box-shadow: 0 0 10px #a3cfbb;
+            animation: pulse 0.5s ease-in-out;
+        }
+        
         .memory-card.matched {
             cursor: default;
-            opacity: 0.5; /* Fica semitransparente ao acertar */
         }
 
+        @keyframes pulse {
+            0% { transform: rotateY(180deg) scale(1); }
+            50% { transform: rotateY(180deg) scale(1.1); }
+            100% { transform: rotateY(180deg) scale(1); }
+        }
+
+        /* Modais */
+        .modal-custom-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+            backdrop-filter: blur(8px);
+            transition: opacity 0.3s;
+        }
+
+        .modal-custom-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 95%;
+            width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: slideUp 0.5s ease-out;
+            border: 4px solid white;
+            max-height: 90vh; /* Evita que o modal vaze da tela em mobile */
+            overflow-y: auto;
+        }
+
+        .modal-custom-content.start-screen-content {
+            background: linear-gradient(to bottom right, #ffffff, #f0f8ff);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Botões de Dificuldade */
+        .difficulty-btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-check:checked + .btn-outline-primary {
+            background-color: #006064;
+            border-color: #006064;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,96,100,0.3);
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-               
-                <h1 class="text-center mb-3">Jogo da Memória</h1>
-               
-                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded shadow-sm mb-4">
-                    <button id="reset-btn" class="btn btn-primary btn-lg">Recomeçar</button>
-                    <h4 class="mb-0">Tentativas: <span id="moves-count" class="badge bg-dark">0</span></h4>
-                </div>
+    <!-- Tela Inicial (Seleção de Dificuldade + Recordes) -->
+    <div id="start-screen" class="modal-custom-backdrop">
+        <div class="modal-custom-content start-screen-content">
+            <h1 class="fw-bold text-primary mb-1" style="font-family: 'Poppins', sans-serif; font-weight: 800;">MEMÓRIA</h1>
+            <p class="text-muted mb-4">Escolha seu desafio</p>
 
-                <div id="game-board">
+            <div class="card border-0 bg-light mb-4 shadow-sm">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-12 mb-2 border-bottom pb-2">
+                            <span class="text-uppercase text-secondary fw-bold" style="font-size: 0.7rem;">Recorde (<span id="record-label">Médio</span>)</span>
+                        </div>
+                        <div class="col-6 border-end">
+                            <span class="d-block text-muted small">Tempo</span>
+                            <span class="fs-5 fw-bold text-dark" id="best-time-display">--:--</span>
+                        </div>
+                        <div class="col-6">
+                            <span class="d-block text-muted small">Movimentos</span>
+                            <span class="fs-5 fw-bold text-dark" id="best-moves-display">--</span>
+                        </div>
                     </div>
-
+                </div>
             </div>
+
+            <div class="difficulty-btn-group">
+                <input type="radio" class="btn-check" name="difficulty" id="diff-easy" value="easy">
+                <label class="btn btn-outline-primary py-2 fw-bold rounded-3" for="diff-easy">
+                    🟢 Fácil
+                    <small class="d-block fw-normal" style="font-size: 0.7rem">6 Pares</small>
+                </label>
+
+                <input type="radio" class="btn-check" name="difficulty" id="diff-medium" value="medium" checked>
+                <label class="btn btn-outline-primary py-2 fw-bold rounded-3" for="diff-medium">
+                    🔵 Médio
+                    <small class="d-block fw-normal" style="font-size: 0.7rem">10 Pares</small>
+                </label>
+
+                <input type="radio" class="btn-check" name="difficulty" id="diff-hard" value="hard">
+                <label class="btn btn-outline-primary py-2 fw-bold rounded-3" for="diff-hard">
+                    🟠 Difícil
+                    <small class="d-block fw-normal" style="font-size: 0.7rem">15 Pares</small>
+                </label>
+
+                <input type="radio" class="btn-check" name="difficulty" id="diff-nightmare" value="nightmare">
+                <label class="btn btn-outline-danger py-2 fw-bold rounded-3" for="diff-nightmare" style="grid-column: span 2; border-width: 2px;">
+                    😈 PESADELO
+                    <small class="d-block fw-normal" style="font-size: 0.7rem">50 Pares (100 Cartas!)</small>
+                </label>
+            </div>
+
+            <button class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-pill shadow hover-effect" onclick="startGame()">
+                JOGAR AGORA
+            </button>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js&quot; integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-   
+    <div class="container mt-2" id="game-container">
+        
+        <div class="header-painel d-flex justify-content-between align-items-center">
+            <div class="stat-box text-start">
+                <div class="stat-label">Movimentos</div>
+                <div class="stat-value" id="moves-count">0</div>
+            </div>
+            
+            <div class="text-center">
+                <h5 class="m-0 d-none d-sm-block fw-bold text-secondary">MEMÓRIA</h5>
+                <span class="badge-difficulty" id="current-difficulty-badge">MÉDIO</span>
+            </div>
+
+            <div class="stat-box text-end">
+                <div class="stat-label">Tempo</div>
+                <div class="stat-value" id="timer">00:00</div>
+            </div>
+
+            <button id="reset-btn" class="btn btn-outline-info rounded-circle p-2 ms-3" title="Voltar ao Menu" onclick="showStartScreen()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-house-door-fill" viewBox="0 0 16 16">
+                    <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5z"/>
+                </svg>
+            </button>
+        </div>
+
+        <div id="game-board">
+            <!-- As cartas serão geradas via JS -->
+        </div>
+
+    </div>
+
+    <!-- Modal de Vitória -->
+    <div id="victory-modal" class="modal-custom-backdrop hidden">
+        <div class="modal-custom-content">
+            <div class="mb-3 display-1">🏆</div>
+            <h2 class="fw-bold mb-1">Parabéns!</h2>
+            <p class="text-muted small mb-3">Dificuldade: <strong id="victory-difficulty">Média</strong></p>
+            
+            <div class="row g-2 mb-4">
+                <div class="col-6">
+                    <div class="p-2 bg-light rounded">
+                        <small class="d-block text-muted">Tempo</small>
+                        <strong id="final-time" class="fs-5">00:00</strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 bg-light rounded">
+                        <small class="d-block text-muted">Movimentos</small>
+                        <strong id="final-moves" class="fs-5">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div id="new-record-msg" class="alert alert-warning py-2 mb-3 hidden" role="alert">
+                ✨ <strong>Novo Recorde!</strong> ✨
+            </div>
+
+            <button class="btn btn-primary w-100 py-2 fw-bold shadow-sm" onclick="showStartScreen()">Menu Principal</button>
+            <button class="btn btn-link text-muted mt-2" onclick="createBoard()">Jogar Novamente</button>
+        </div>
+    </div>
+
     <script>
-        // Referências aos elementos do DOM
+        // --- Elementos do DOM ---
+        const gameContainer = document.getElementById('game-container');
         const gameBoard = document.getElementById('game-board');
-        const movesCount = document.getElementById('moves-count');
-        const resetBtn = document.getElementById('reset-btn');
+        const movesCountEl = document.getElementById('moves-count');
+        const timerEl = document.getElementById('timer');
+        const startScreen = document.getElementById('start-screen');
+        const victoryModal = document.getElementById('victory-modal');
+        const currentDiffBadge = document.getElementById('current-difficulty-badge');
+        
+        // Elementos de Recorde na Tela Inicial
+        const bestTimeDisplay = document.getElementById('best-time-display');
+        const bestMovesDisplay = document.getElementById('best-moves-display');
+        const recordLabel = document.getElementById('record-label');
+        const difficultyRadios = document.getElementsByName('difficulty');
 
-        // Emojis para os pares (6 pares = 12 cartas)
-        // Você pode trocar por quaisquer emojis
-        const symbols = ['🍎', '🍌', '🍉', '🍇', '🍓', '🍒', '🍎', '🍌', '🍉', '🍇', '🍓', '🍒'];
+        // Elementos de Vitória
+        const finalTimeEl = document.getElementById('final-time');
+        const finalMovesEl = document.getElementById('final-moves');
+        const victoryDifficulty = document.getElementById('victory-difficulty');
+        const newRecordMsg = document.getElementById('new-record-msg');
 
-        // Variáveis de estado do Jogo
+        // --- Configurações do Jogo ---
+        // Lista GIGANTE de emojis para suportar até 50 pares (100 cartas)
+        const allSymbols = [
+            '🍎', '🍌', '🍉', '🍇', '🍓', '🍒', '🥝', '🍍', '🥑', '🌽', 
+            '🥕', '🥔', '🥦', '🥥', '🥜', '🍄', '🍅', '🍆', '🍞', '🧀',
+            '🍖', '🍗', '🍔', '🍟', '🍕', '🌭', '🌮', '🌯', '🥚', '🍿',
+            '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+            '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
+            '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸',
+            '🚗', '🚕', '🚙', '🚌', '🚓', '🚑', '🚒', '🚐', '🚚', '🚛',
+            '⌚', '📱', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '📷', '📹', '📺'
+        ];
+
+        // Configurações por dificuldade
+        const difficultySettings = {
+            easy: { 
+                pairs: 6, // 12 cartas
+                cols: 3, // Grid 3x4
+                label: "Fácil",
+                class: "game-easy"
+            },
+            medium: { 
+                pairs: 10, // 20 cartas
+                cols: 4, // Grid 4x5
+                label: "Médio",
+                class: "game-medium"
+            },
+            hard: { 
+                pairs: 15, // 30 cartas
+                cols: 5, // Grid 5x6
+                label: "Difícil",
+                class: "game-hard"
+            },
+            nightmare: { 
+                pairs: 50, // 100 cartas!!
+                cols: 10, // Grid 10x10 (no desktop)
+                label: "Pesadelo",
+                class: "game-nightmare"
+            }
+        };
+
+        // --- Estado do Jogo ---
+        let currentDifficulty = 'medium';
+        let cardsList = [];
         let hasFlippedCard = false;
-        let lockBoard = false; // Trava o tabuleiro para evitar 2+ cliques
+        let lockBoard = false;
         let firstCard, secondCard;
         let moves = 0;
         let matchedPairs = 0;
+        let timerInterval = null;
+        let seconds = 0;
+        let gameStarted = false;
 
-        // Função para embaralhar um array (Algoritmo Fisher-Yates)
+        // --- Gerenciamento de Recordes (LocalStorage) ---
+        
+        function updateRecordDisplay(difficulty) {
+            const timeKey = `memoryBestTime_${difficulty}`;
+            const movesKey = `memoryBestMoves_${difficulty}`;
+            
+            const bestTime = localStorage.getItem(timeKey);
+            const bestMoves = localStorage.getItem(movesKey);
+            
+            recordLabel.textContent = difficultySettings[difficulty].label;
+
+            if (bestTime) {
+                bestTimeDisplay.textContent = formatTime(parseInt(bestTime));
+            } else {
+                bestTimeDisplay.textContent = "--:--";
+            }
+
+            if (bestMoves) {
+                bestMovesDisplay.textContent = bestMoves;
+            } else {
+                bestMovesDisplay.textContent = "--";
+            }
+        }
+
+        difficultyRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                updateRecordDisplay(e.target.value);
+            });
+        });
+
+        function saveRecord(currentSeconds, currentMoves) {
+            let isNewRecord = false;
+            const timeKey = `memoryBestTime_${currentDifficulty}`;
+            const movesKey = `memoryBestMoves_${currentDifficulty}`;
+            
+            const bestTime = localStorage.getItem(timeKey);
+            if (!bestTime || currentSeconds < parseInt(bestTime)) {
+                localStorage.setItem(timeKey, currentSeconds);
+                isNewRecord = true;
+            }
+
+            const bestMoves = localStorage.getItem(movesKey);
+            if (!bestMoves || currentMoves < parseInt(bestMoves)) {
+                localStorage.setItem(movesKey, currentMoves);
+                isNewRecord = true;
+            }
+
+            return isNewRecord;
+        }
+
+        // --- Funções Auxiliares ---
+
+        function formatTime(secs) {
+            const min = Math.floor(secs / 60);
+            const s = secs % 60;
+            return `${min.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (gameStarted) return;
+            gameStarted = true;
+            timerInterval = setInterval(() => {
+                seconds++;
+                timerEl.textContent = formatTime(seconds);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            gameStarted = false;
+        }
+
+        function resetTimer() {
+            stopTimer();
+            seconds = 0;
+            timerEl.textContent = "00:00";
+        }
+
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -125,126 +532,181 @@
             }
         }
 
-        // Função para criar o tabuleiro
+        // --- Fluxo de Telas ---
+
+        function showStartScreen() {
+            stopTimer(); 
+            const selectedDiff = document.querySelector('input[name="difficulty"]:checked').value;
+            updateRecordDisplay(selectedDiff);
+
+            victoryModal.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            gameContainer.style.filter = "blur(5px)";
+        }
+
+        function startGame() {
+            const selectedRadio = document.querySelector('input[name="difficulty"]:checked');
+            if (selectedRadio) {
+                currentDifficulty = selectedRadio.value;
+            }
+
+            startScreen.classList.add('hidden');
+            gameContainer.style.filter = "none";
+            
+            createBoard();
+        }
+
+        // --- Lógica Principal do Jogo ---
+
         function createBoard() {
-            // Reseta o estado
+            const settings = difficultySettings[currentDifficulty];
+            
+            // Configurações Visuais
             gameBoard.innerHTML = '';
+            gameBoard.className = ''; 
+            gameBoard.classList.add(settings.class);
+            
+            // Configura colunas do Grid
+            // Se for pesadelo, o CSS Media Query toma conta da responsividade (5 col mobile, 10 desktop)
+            if (currentDifficulty !== 'nightmare') {
+                 gameBoard.style.gridTemplateColumns = `repeat(${settings.cols}, 1fr)`;
+                 gameContainer.classList.remove('container-fluid-nightmare');
+            } else {
+                 gameBoard.style.gridTemplateColumns = ''; // Deixa o CSS decidir
+                 gameContainer.classList.add('container-fluid-nightmare'); // Expande largura
+            }
+            
+            // Atualiza Badge
+            currentDiffBadge.textContent = settings.label;
+
+            // Reseta Estado
             moves = 0;
             matchedPairs = 0;
-            movesCount.textContent = moves;
-            lockBoard = false;
+            movesCountEl.textContent = moves;
             hasFlippedCard = false;
-           
-            // Embaralha os símbolos
-            shuffle(symbols);
+            lockBoard = false;
+            firstCard = null;
+            secondCard = null;
+            
+            victoryModal.classList.add('hidden');
+            resetTimer();
 
-            // Cria o HTML de cada carta
-            symbols.forEach(symbol => {
+            // Prepara as cartas
+            // Verifica se temos símbolos suficientes, senão recicla
+            let neededSymbols = settings.pairs;
+            let gameSymbols = [];
+            
+            // Se precisarmos de mais símbolos do que temos na lista (caso extremo), repete a lista
+            if (neededSymbols > allSymbols.length) {
+                // Isso é só segurança, nossa lista tem ~80 itens
+                const repeats = Math.ceil(neededSymbols / allSymbols.length);
+                let extendedList = [];
+                for(let i=0; i<repeats; i++) extendedList = extendedList.concat(allSymbols);
+                gameSymbols = extendedList.slice(0, neededSymbols);
+            } else {
+                gameSymbols = allSymbols.slice(0, neededSymbols);
+            }
+
+            // Duplica
+            cardsList = [...gameSymbols, ...gameSymbols];
+            // Embaralha
+            shuffle(cardsList);
+
+            cardsList.forEach(symbol => {
                 const card = document.createElement('div');
                 card.classList.add('memory-card');
-                // Adiciona um data-attribute para sabermos qual é o símbolo
                 card.dataset.symbol = symbol;
 
                 card.innerHTML = `
                     <div class="card-inner">
                         <div class="card-front">
-                            ? </div>
-                        <div class="card-back">
-                            ${symbol} </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-question-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M4.475 5.458c-.284 0-.514-.237-.47-.517C4.28 3.24 5.576 2 7.825 2c2.25 0 3.767 1.36 3.767 3.215 0 1.344-.665 2.288-1.79 2.973-1.1.659-1.414 1.118-1.414 2.01v.03a.5.5 0 0 1-.5.5h-.77a.5.5 0 0 1-.5-.495l-.002-.279c0-1.13.407-1.71 1.627-2.457 1.096-.665 1.55-1.155 1.55-2.012 0-1.118-.948-1.664-2.193-1.664-1.336 0-1.996.75-2.113 1.636-.046.353-.356.561-.706.561z"/>
+                                <path d="M7.594 10.82c-.63 0-1.144-.32-1.144-.826 0-.505.515-.826 1.144-.826.63 0 1.144.32 1.144.826 0 .505-.515.826-1.144.826z"/>
+                            </svg>
+                        </div>
+                        <div class="card-back">${symbol}</div>
                     </div>
                 `;
 
-                // Adiciona o evento de clique
                 card.addEventListener('click', flipCard);
                 gameBoard.appendChild(card);
             });
         }
 
-        // Função principal: Virar a carta
         function flipCard() {
-            // 'this' se refere à carta que foi clicada
-           
-            // Se o tabuleiro estiver travado (ex: esperando cartas desvirarem), ignora o clique
-            // Se a carta clicada for a mesma que a primeira, ignora
-            if (lockBoard || this === firstCard || this.classList.contains('matched')) {
+            if (!gameStarted) startTimer();
+            
+            if (lockBoard || this === firstCard || this.classList.contains('matched')) return;
+
+            this.classList.add('flipped');
+
+            if (!hasFlippedCard) {
+                hasFlippedCard = true;
+                firstCard = this;
                 return;
             }
 
-            this.classList.add('flipped'); // Vira a carta (CSS faz a animação)
-
-            if (!hasFlippedCard) {
-                // Primeiro clique
-                hasFlippedCard = true;
-                firstCard = this;
-            } else {
-                // Segundo clique
-                secondCard = this;
-                moves++;
-                movesCount.textContent = moves;
-               
-                checkForMatch();
-            }
+            secondCard = this;
+            moves++;
+            movesCountEl.textContent = moves;
+            checkForMatch();
         }
 
-        // Verifica se as duas cartas viradas são iguais
         function checkForMatch() {
-            const isMatch = firstCard.dataset.symbol === secondCard.dataset.symbol;
-
-            if (isMatch) {
-                disableCards();
-            } else {
-                unflipCards();
-            }
+            let isMatch = firstCard.dataset.symbol === secondCard.dataset.symbol;
+            isMatch ? disableCards() : unflipCards();
         }
 
-        // Se deu "match" (combinou)
         function disableCards() {
-            // Marca como "combinado"
-            firstCard.classList.add('matched');
-            secondCard.classList.add('matched');
-
-            // Remove o evento de clique para não poderem ser viradas de novo
-            firstCard.removeEventListener('click', flipCard);
-            secondCard.removeEventListener('click', flipCard);
+            setTimeout(() => {
+                firstCard.classList.add('matched');
+                secondCard.classList.add('matched');
+            }, 200);
 
             matchedPairs++;
-           
-            // Verifica se o jogo acabou
-            if (matchedPairs === symbols.length / 2) {
-                setTimeout(() => {
-                    alert(`Parabéns! Você venceu em ${moves} tentativas!`);
-                }, 500); // Dá um tempinho para a última carta virar
-            }
-
             resetBoardState();
+
+            const settings = difficultySettings[currentDifficulty];
+            if (matchedPairs === settings.pairs) {
+                stopTimer();
+                setTimeout(showVictory, 600);
+            }
         }
 
-        // Se não deu "match"
         function unflipCards() {
-            lockBoard = true; // Trava o tabuleiro
-
-            // Espera 1 segundo antes de desvirar
+            lockBoard = true;
             setTimeout(() => {
                 firstCard.classList.remove('flipped');
                 secondCard.classList.remove('flipped');
-               
-                resetBoardState(); // Destrava o tabuleiro e reseta as variáveis
+                resetBoardState();
             }, 1000);
         }
 
-        // Reseta as variáveis de estado após cada jogada
         function resetBoardState() {
-            hasFlippedCard = false;
-            lockBoard = false;
-            firstCard = null;
-            secondCard = null;
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
         }
 
-        // Event listener do botão de recomeçar
-        resetBtn.addEventListener('click', createBoard);
+        function showVictory() {
+            finalTimeEl.textContent = formatTime(seconds);
+            finalMovesEl.textContent = moves;
+            victoryDifficulty.textContent = difficultySettings[currentDifficulty].label;
 
-        // Inicia o jogo pela primeira vez
-        createBoard();
+            const isNewRecord = saveRecord(seconds, moves);
+            
+            if (isNewRecord) {
+                newRecordMsg.classList.remove('hidden');
+            } else {
+                newRecordMsg.classList.add('hidden');
+            }
+
+            victoryModal.classList.remove('hidden');
+        }
+
+        // --- Inicialização ---
+        updateRecordDisplay('medium'); 
+        showStartScreen(); 
 
     </script>
 </body>
